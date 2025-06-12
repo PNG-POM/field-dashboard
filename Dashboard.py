@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import os
 from datetime import datetime
-from PIL import Image
 from streamlit_javascript import st_javascript
 
 # === Config ===
@@ -26,6 +25,12 @@ st.markdown(
         font-size: 14px;
         color: #333;
     }
+    @media only screen and (max-width: 600px) {
+        h1 { font-size: 24px !important; }
+        .stTextInput > div > input, .stTextArea > div > textarea {
+            font-size: 16px !important;
+        }
+    }
     </style>
     <div class='custom-footer'>
         © 2025 Digicel PNG | Contact: support@digicelpng.com | Powered by Streamlit
@@ -36,11 +41,7 @@ st.markdown(
 
 DATA_LOG_PATH = "Visit_Log.xlsx"
 MASTER_DATA_PATH = "Master Data New.xlsx"
-PHOTO_FOLDER = "Photos"
 ADMIN_PASSWORD = "noc123"
-
-# Ensure photo folder exists
-os.makedirs(PHOTO_FOLDER, exist_ok=True)
 
 # === Load Existing Data ===
 def load_log():
@@ -107,16 +108,12 @@ if admin_mode:
         df = load_log()
         st.dataframe(df, use_container_width=True)
         st.download_button("📅 Download Full Log", data=df.to_csv(index=False).encode(), file_name="Visit_Log.csv")
-        with st.expander("📸 View Uploaded Photos"):
-            photo_files = sorted(os.listdir(PHOTO_FOLDER))
-            for file in photo_files:
-                st.image(os.path.join(PHOTO_FOLDER, file), caption=file, use_column_width=True)
     else:
         st.error("Access denied.")
 else:
     st.subheader("📌 Enter Visit Details")
 
-    with st.form("visit_form"):
+    with st.form("visit_form", clear_on_submit=True):
         site_id = st.text_input("Site ID")
         rto, region, tt_number = get_master_details(site_id)
 
@@ -127,7 +124,6 @@ else:
         name = st.text_input("FE/Contractor Name")
         phone = st.text_input("Phone Number")
         remarks = st.text_area("Remarks")
-        photo = st.file_uploader("Upload Site Photo", type=["jpg", "png", "jpeg"])
 
         lat, lon = get_location()
         submit = st.form_submit_button("Submit")
@@ -136,11 +132,6 @@ else:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         site_visit_time = timestamp
         activity_complete_time = timestamp
-        photo_filename = ""
-        if photo:
-            photo_filename = f"{site_id}_{timestamp.replace(':', '').replace(' ', '_')}.jpg"
-            image = Image.open(photo)
-            image.convert("RGB").save(os.path.join(PHOTO_FOLDER, photo_filename))
 
         new_entry = pd.DataFrame([{ 
             "Timestamp": timestamp,
@@ -153,7 +144,7 @@ else:
             "Remarks": remarks,
             "Latitude": lat,
             "Longitude": lon,
-            "Photo": photo_filename,
+            "Photo": "N/A",
             "Site Visit Time": site_visit_time,
             "Activity Complete Time": activity_complete_time
         }])
