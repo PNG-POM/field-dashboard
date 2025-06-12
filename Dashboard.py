@@ -118,7 +118,8 @@ if admin_mode:
 
         filtered_df = df.copy()
         if filter_date:
-            filtered_df = filtered_df[filtered_df['Timestamp'].str.contains(str(filter_date))]
+            filtered_df['Timestamp'] = pd.to_datetime(filtered_df['Timestamp'], errors='coerce')
+            filtered_df = filtered_df[filtered_df['Timestamp'].dt.date == filter_date]
         if filter_fe:
             filtered_df = filtered_df[filtered_df['FE/Contractor Name'].str.contains(filter_fe, case=False)]
         if filter_region:
