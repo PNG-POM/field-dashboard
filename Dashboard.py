@@ -113,7 +113,7 @@ else:
         if photo:
             photo_filename = f"{site_id}_{timestamp.replace(':', '').replace(' ', '_')}.jpg"
             image = Image.open(photo)
-            image.save(os.path.join(PHOTO_FOLDER, photo_filename))
+            image.convert("RGB").save(os.path.join(PHOTO_FOLDER, photo_filename))
 
         new_entry = pd.DataFrame([{ 
             "Timestamp": timestamp,
