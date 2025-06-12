@@ -128,17 +128,22 @@ else:
 
         if st.button("🔓 Site Login"):
             login_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            st.session_state.clear()
             st.session_state["logged_in"] = True
             st.session_state["login_time"] = login_time
+            st.session_state["site_id"] = site_id
+            st.session_state["rto"] = rto
+            st.session_state["region"] = region
+            st.session_state["tt_number"] = tt_number
             st.success(f"✅ Site Login recorded at {login_time}")
 
-        if st.session_state.get("logged_in"):
+        if st.session_state.get("logged_in") and st.session_state.get("site_id") == site_id:
             st.markdown("---")
             st.markdown("### 📸 Activity at Site")
 
-            name = st.text_input("FE/Contractor Name")
-            phone = st.text_input("Phone Number")
-            remarks = st.text_area("Remarks")
+            name = st.text_input("FE/Contractor Name", value="" if "name" not in st.session_state else st.session_state["name"])
+            phone = st.text_input("Phone Number", value="" if "phone" not in st.session_state else st.session_state["phone"])
+            remarks = st.text_area("Remarks", value="" if "remarks" not in st.session_state else st.session_state["remarks"])
             uploaded_photo = st.file_uploader("Upload Site Photo", type=["jpg", "jpeg", "png"])
             lat, lon = get_location()
 
@@ -171,15 +176,13 @@ else:
                     }])
 
                     try:
-                        if not new_entry.empty:
-                            df = pd.concat([df, new_entry], ignore_index=True)
-                            save_log(df)
-                            st.success(f"✅ Visit logged successfully! Time spent: {datetime.strptime(logout_time, '%Y-%m-%d %H:%M:%S') - datetime.strptime(st.session_state['login_time'], '%Y-%m-%d %H:%M:%S')}")
+                        df = pd.concat([df, new_entry], ignore_index=True)
+                        save_log(df)
+                        st.success(f"✅ Visit logged successfully! Time spent: {datetime.strptime(logout_time, '%Y-%m-%d %H:%M:%S') - datetime.strptime(st.session_state['login_time'], '%Y-%m-%d %H:%M:%S')}")
                     except Exception as e:
                         st.error(f"❌ Error during log saving: {e}")
 
                 st.session_state.clear()
-                st.session_state["rerun_flag"] = True
-                st.stop()
+                st.experimental_rerun()
     else:
         st.info("Enter Site ID above to begin visit process.")
