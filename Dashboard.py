@@ -3,6 +3,7 @@ import pandas as pd
 import os
 from datetime import datetime
 from streamlit_javascript import st_javascript
+import matplotlib.pyplot as plt
 
 # === Config ===
 st.set_page_config(page_title="DigicelPNG Field Visit Login Portal", layout="wide")
@@ -30,6 +31,10 @@ st.markdown(
         .stTextInput > div > input, .stTextArea > div > textarea {
             font-size: 16px !important;
         }
+        button[kind="primary"] {
+            width: 100% !important;
+            font-size: 18px !important;
+        }
     }
     </style>
     <div class='custom-footer'>
@@ -49,7 +54,7 @@ def load_log():
         return pd.read_excel(DATA_LOG_PATH)
     else:
         return pd.DataFrame(columns=[
-            "Timestamp", "FE/Contractor Name", "Phone Number", "Site ID", "RTO", "Region", "TT Number", "Remarks", "Latitude", "Longitude", "Photo", "Site Visit Time", "Activity Complete Time"
+            "Timestamp", "FE/Contractor Name", "Phone Number", "Site ID", "RTO", "Region", "TT Number", "Remarks", "Latitude", "Longitude", "Photo", "Site Visit Time", "Activity Complete Time", "Status"
         ])
 
 # === Save Data ===
@@ -106,50 +111,104 @@ if admin_mode:
     if password == ADMIN_PASSWORD:
         st.success("Access granted.")
         df = load_log()
-        st.dataframe(df, use_container_width=True)
-        st.download_button("📅 Download Full Log", data=df.to_csv(index=False).encode(), file_name="Visit_Log.csv")
+
+        filter_date = st.date_input("📅 Filter by Date", value=datetime.now().date())
+        filter_fe = st.text_input("🔍 Filter by FE/Contractor Name")
+        filter_region = st.text_input("🌍 Filter by Region")
+
+        filtered_df = df.copy()
+        if filter_date:
+            filtered_df = filtered_df[filtered_df['Timestamp'].str.contains(str(filter_date))]
+        if filter_fe:
+            filtered_df = filtered_df[filtered_df['FE/Contractor Name'].str.contains(filter_fe, case=False)]
+        if filter_region:
+            filtered_df = filtered_df[filtered_df['Region'].str.contains(filter_region, case=False)]
+
+        st.dataframe(filtered_df, use_container_width=True)
+        st.download_button("🗕️ Download Filtered Log", data=filtered_df.to_csv(index=False).encode(), file_name="Filtered_Visit_Log.csv")
+
+        # === Chart Section ===
+        st.subheader("📊 Visit Summary Charts")
+        col1, col2 = st.columns(2)
+
+        with col1:
+            visits_by_region = df['Region'].value_counts()
+            fig, ax = plt.subplots()
+            visits_by_region.plot(kind='bar', ax=ax)
+            ax.set_title("Visits by Region")
+            ax.set_ylabel("Count")
+            st.pyplot(fig)
+
+        with col2:
+            df['Timestamp'] = pd.to_datetime(df['Timestamp'], errors='coerce')
+            visits_by_day = df.groupby(df['Timestamp'].dt.date).size()
+            fig2, ax2 = plt.subplots()
+            visits_by_day.plot(kind='line', marker='o', ax=ax2)
+            ax2.set_title("Visits Per Day")
+            ax2.set_ylabel("Count")
+            st.pyplot(fig2)
     else:
         st.error("Access denied.")
 else:
     st.subheader("📌 Enter Visit Details")
 
-    with st.form("visit_form", clear_on_submit=True):
-        site_id = st.text_input("Site ID")
+    site_id = st.text_input("Site ID", key="site_id")
+    if site_id:
         rto, region, tt_number = get_master_details(site_id)
-
         st.markdown(f"**RTO:** {rto}  ")
         st.markdown(f"**Region:** {region}  ")
         st.markdown(f"**TT Number:** {tt_number}")
 
-        name = st.text_input("FE/Contractor Name")
-        phone = st.text_input("Phone Number")
-        remarks = st.text_area("Remarks")
+        st.markdown("---")
+        st.markdown("### 🚪 Site Login")
 
-        lat, lon = get_location()
-        submit = st.form_submit_button("Submit")
+        with st.form("visit_form", clear_on_submit=True):
+            name = st.text_input("FE/Contractor Name", key="name")
+            phone = st.text_input("Phone Number", key="phone")
+            remarks = st.text_area("Remarks", key="remarks")
 
-    if submit:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        site_visit_time = timestamp
-        activity_complete_time = timestamp
+            lat, lon = get_location()
+            submit = st.form_submit_button("Site Login")
 
-        new_entry = pd.DataFrame([{ 
-            "Timestamp": timestamp,
-            "FE/Contractor Name": name,
-            "Phone Number": phone,
-            "Site ID": site_id,
-            "RTO": rto,
-            "Region": region,
-            "TT Number": tt_number,
-            "Remarks": remarks,
-            "Latitude": lat,
-            "Longitude": lon,
-            "Photo": "N/A",
-            "Site Visit Time": site_visit_time,
-            "Activity Complete Time": activity_complete_time
-        }])
+        if submit:
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            df = load_log()
+            existing_entry = df[(df['Site ID'] == site_id) & (df['FE/Contractor Name'] == name) & (df['Status'] == "IN")]
 
-        df = load_log()
-        df = pd.concat([df, new_entry], ignore_index=True)
-        save_log(df)
-        st.success("✅ Visit logged successfully!")
+            if existing_entry.empty:
+                new_entry = pd.DataFrame([{ 
+                    "Timestamp": timestamp,
+                    "FE/Contractor Name": name,
+                    "Phone Number": phone,
+                    "Site ID": site_id,
+                    "RTO": rto,
+                    "Region": region,
+                    "TT Number": tt_number,
+                    "Remarks": remarks,
+                    "Latitude": lat,
+                    "Longitude": lon,
+                    "Photo": "N/A",
+                    "Site Visit Time": timestamp,
+                    "Activity Complete Time": "",
+                    "Status": "IN"
+                }])
+
+                df = pd.concat([df, new_entry], ignore_index=True)
+                save_log(df)
+
+                st.success("✅ Site Login recorded!")
+                st.experimental_rerun()
+            else:
+                idx = existing_entry.index[0]
+                df.at[idx, "Activity Complete Time"] = timestamp
+                df.at[idx, "Status"] = "OUT"
+
+                site_visit_time = datetime.strptime(df.at[idx, "Site Visit Time"], "%Y-%m-%d %H:%M:%S")
+                activity_complete_time = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+                duration = activity_complete_time - site_visit_time
+
+                save_log(df)
+                st.success(f"📤 Site Logout Successful! Total time spent: {duration}")
+                st.experimental_rerun()
+    else:
+        st.info("Enter Site ID above to begin visit process.")
