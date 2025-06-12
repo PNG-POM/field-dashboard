@@ -2,7 +2,5 @@ streamlit
 pandas
 openpyxl
 schedule
-google-auth
-google-auth-oauthlib
-google-api-python-client
+matplotlib
 streamlit-javascript
