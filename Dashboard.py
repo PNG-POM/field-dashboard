@@ -5,10 +5,16 @@ from datetime import datetime
 from streamlit_javascript import st_javascript
 import matplotlib.pyplot as plt
 
+# === TEMP: Delete Visit_Log.xlsx if exists (to fix KeyError crash) ===
+try:
+    if os.path.exists("Visit_Log.xlsx"):
+        os.remove("Visit_Log.xlsx")
+        print("🗑️ Visit_Log.xlsx deleted.")
+except Exception as e:
+    print("Error deleting Visit_Log.xlsx:", e)
+
 # === Config ===
 st.set_page_config(page_title="DigicelPNG Field Visit Login Portal", layout="wide")
-
-st.image("https://raw.githubusercontent.com/PNG-POM/field-dashboard/main/banner.jpg", use_column_width=True)
 
 st.markdown(
     """
@@ -97,13 +103,13 @@ def get_master_details(site_id):
     tt_number = f"TT_{site_id}_{now}"
     return rto, region, tt_number
 
-# === Main ===
+# === Main UI ===
 st.markdown("""
     <h1 style='text-align: center; color: #E50914;'>📍 DigicelPNG Field Visit Login Portal</h1>
     <hr style='border: 1px solid #E50914;'>
 """, unsafe_allow_html=True)
 
-# --- Admin Toggle ---
+# --- Admin Mode ---
 admin_mode = st.sidebar.checkbox("🔐 Admin Login")
 
 if admin_mode:
@@ -128,7 +134,7 @@ if admin_mode:
         st.dataframe(filtered_df, use_container_width=True)
         st.download_button("🗕️ Download Filtered Log", data=filtered_df.to_csv(index=False).encode(), file_name="Filtered_Visit_Log.csv")
 
-        # === Chart Section ===
+        # === Charts ===
         st.subheader("📊 Visit Summary Charts")
         col1, col2 = st.columns(2)
 
@@ -174,7 +180,13 @@ else:
         if submit:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             df = load_log()
-            existing_entry = df[(df['Site ID'] == site_id) & (df['FE/Contractor Name'] == name) & (df['Status'] == "IN")]
+            if "Status" not in df.columns:
+                df["Status"] = "IN"
+
+            if all(col in df.columns for col in ["Site ID", "FE/Contractor Name", "Status"]):
+                existing_entry = df[(df['Site ID'] == site_id) & (df['FE/Contractor Name'] == name) & (df['Status'] == "IN")]
+            else:
+                existing_entry = pd.DataFrame()
 
             if existing_entry.empty:
                 new_entry = pd.DataFrame([{ 
@@ -193,7 +205,6 @@ else:
                     "Activity Complete Time": "",
                     "Status": "IN"
                 }])
-
                 df = pd.concat([df, new_entry], ignore_index=True)
                 save_log(df)
 
