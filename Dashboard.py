@@ -56,8 +56,16 @@ def get_master_details(site_id):
         master_df = pd.read_excel(MASTER_DATA_PATH)
         match = master_df[master_df['Site ID'] == site_id]
         if not match.empty:
-            return match.iloc[0]['RTO'], match.iloc[0]['Region'], match.iloc[0]['TT Number']
-    return "", "", ""
+            rto = match.iloc[0]['RTO']
+            region = match.iloc[0]['Region']
+        else:
+            rto = region = ""
+    else:
+        rto = region = ""
+
+    now = datetime.now().strftime("%Y%m%d_%H%M%S")
+    tt_number = f"TT_{site_id}_{now}"
+    return rto, region, tt_number
 
 # === Main ===
 st.title("📋 Field Visit Tracking")
