@@ -209,7 +209,8 @@ else:
                 save_log(df)
 
                 st.success("✅ Site Login recorded!")
-                st.experimental_rerun()
+                st.rerun()
+
             else:
                 idx = existing_entry.index[0]
                 df.at[idx, "Activity Complete Time"] = timestamp
@@ -221,6 +222,6 @@ else:
 
                 save_log(df)
                 st.success(f"📤 Site Logout Successful! Total time spent: {duration}")
-                st.experimental_rerun()
+                st.rerun()
     else:
         st.info("Enter Site ID above to begin visit process.")
