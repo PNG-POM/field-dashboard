@@ -170,10 +170,13 @@ else:
                         "Status": "Complete"
                     }])
 
-                    if not new_entry.empty:
-                        df = pd.concat([df, new_entry], ignore_index=True)
-                        save_log(df)
-                        st.success(f"✅ Visit logged successfully! Time spent: {datetime.strptime(logout_time, '%Y-%m-%d %H:%M:%S') - datetime.strptime(st.session_state['login_time'], '%Y-%m-%d %H:%M:%S')}")
+                    try:
+                        if not new_entry.empty:
+                            df = pd.concat([df, new_entry], ignore_index=True)
+                            save_log(df)
+                            st.success(f"✅ Visit logged successfully! Time spent: {datetime.strptime(logout_time, '%Y-%m-%d %H:%M:%S') - datetime.strptime(st.session_state['login_time'], '%Y-%m-%d %H:%M:%S')}")
+                    except Exception as e:
+                        st.error(f"❌ Error during log saving: {e}")
 
                 st.session_state.clear()
                 st.session_state["rerun_flag"] = True
