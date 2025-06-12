@@ -8,16 +8,11 @@ from streamlit_javascript import st_javascript
 # === Config ===
 st.set_page_config(page_title="DigicelPNG Field Visit Login Portal", layout="wide")
 
+st.image("https://raw.githubusercontent.com/PNG-POM/field-dashboard/main/banner.jpg", use_column_width=True)
+
 st.markdown(
     """
     <style>
-    .stApp {
-        background-image: url('https://raw.githubusercontent.com/PNG-POM/field-dashboard/main/banner.jpg');
-        background-size: cover;
-        background-position: top center;
-        background-repeat: no-repeat;
-        padding-top: 200px;
-    }
     footer {
         visibility: hidden;
     }
