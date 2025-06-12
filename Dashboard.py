@@ -152,26 +152,29 @@ else:
                     image.save(os.path.join(PHOTO_FOLDER, photo_filename))
 
                 df = load_log()
-                new_entry = pd.DataFrame([{ 
-                    "Timestamp": logout_time,
-                    "FE/Contractor Name": name,
-                    "Phone Number": phone,
-                    "Site ID": site_id,
-                    "RTO": rto,
-                    "Region": region,
-                    "TT Number": tt_number,
-                    "Remarks": remarks,
-                    "Latitude": lat,
-                    "Longitude": lon,
-                    "Photo": photo_filename,
-                    "Site Visit Time": st.session_state["login_time"],
-                    "Activity Complete Time": logout_time,
-                    "Status": "Complete"
-                }])
 
-                df = pd.concat([df, new_entry], ignore_index=True)
-                save_log(df)
-                st.success(f"✅ Visit logged successfully! Time spent: {datetime.strptime(logout_time, '%Y-%m-%d %H:%M:%S') - datetime.strptime(st.session_state['login_time'], '%Y-%m-%d %H:%M:%S')}")
+                if site_id and name and phone:
+                    new_entry = pd.DataFrame([{ 
+                        "Timestamp": logout_time,
+                        "FE/Contractor Name": name,
+                        "Phone Number": phone,
+                        "Site ID": site_id,
+                        "RTO": rto,
+                        "Region": region,
+                        "TT Number": tt_number,
+                        "Remarks": remarks,
+                        "Latitude": lat,
+                        "Longitude": lon,
+                        "Photo": photo_filename,
+                        "Site Visit Time": st.session_state.get("login_time", ""),
+                        "Activity Complete Time": logout_time,
+                        "Status": "Complete"
+                    }])
+
+                    if not new_entry.empty:
+                        df = pd.concat([df, new_entry], ignore_index=True)
+                        save_log(df)
+                        st.success(f"✅ Visit logged successfully! Time spent: {datetime.strptime(logout_time, '%Y-%m-%d %H:%M:%S') - datetime.strptime(st.session_state['login_time'], '%Y-%m-%d %H:%M:%S')}")
 
                 st.session_state.clear()
                 st.session_state["rerun_flag"] = True
