@@ -4,16 +4,45 @@ import os
 from datetime import datetime
 from PIL import Image
 from streamlit_javascript import st_javascript
-from upload_to_drive import upload_to_drive
 
 # === Config ===
-st.set_page_config(page_title="Field Visit Tracking", layout="wide")
+st.set_page_config(page_title="DigicelPNG Field Visit Login Portal", layout="wide")
+
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-image: url('https://raw.githubusercontent.com/PNG-POM/field-dashboard/main/banner.jpg');
+        background-size: cover;
+        background-position: top center;
+        background-repeat: no-repeat;
+        padding-top: 200px;
+    }
+    footer {
+        visibility: hidden;
+    }
+    .custom-footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        text-align: center;
+        padding: 10px;
+        background-color: rgba(255, 255, 255, 0.85);
+        font-size: 14px;
+        color: #333;
+    }
+    </style>
+    <div class='custom-footer'>
+        © 2025 Digicel PNG | Contact: support@digicelpng.com | Powered by Streamlit
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 DATA_LOG_PATH = "Visit_Log.xlsx"
 MASTER_DATA_PATH = "Master Data New.xlsx"
 PHOTO_FOLDER = "Photos"
 ADMIN_PASSWORD = "noc123"
-FOLDER_ID = "1u9AI97zUYoE5ui-rRrG-EKw6ZW1lmRQy"  # Google Drive folder ID
 
 # Ensure photo folder exists
 os.makedirs(PHOTO_FOLDER, exist_ok=True)
@@ -68,7 +97,10 @@ def get_master_details(site_id):
     return rto, region, tt_number
 
 # === Main ===
-st.title("📋 Field Visit Tracking")
+st.markdown("""
+    <h1 style='text-align: center; color: #E50914;'>📍 DigicelPNG Field Visit Login Portal</h1>
+    <hr style='border: 1px solid #E50914;'>
+""", unsafe_allow_html=True)
 
 # --- Admin Toggle ---
 admin_mode = st.sidebar.checkbox("🔐 Admin Login")
@@ -79,7 +111,7 @@ if admin_mode:
         st.success("Access granted.")
         df = load_log()
         st.dataframe(df, use_container_width=True)
-        st.download_button("📥 Download Full Log", data=df.to_csv(index=False).encode(), file_name="Visit_Log.csv")
+        st.download_button("📅 Download Full Log", data=df.to_csv(index=False).encode(), file_name="Visit_Log.csv")
         with st.expander("📸 View Uploaded Photos"):
             photo_files = sorted(os.listdir(PHOTO_FOLDER))
             for file in photo_files:
@@ -135,10 +167,3 @@ else:
         df = pd.concat([df, new_entry], ignore_index=True)
         save_log(df)
         st.success("✅ Visit logged successfully!")
-
-        # Upload to Google Drive
-        try:
-            upload_to_drive(DATA_LOG_PATH, FOLDER_ID)
-            st.info("📤 Log also backed up to Google Drive.")
-        except Exception as e:
-            st.warning(f"⚠️ Upload failed: {e}")
