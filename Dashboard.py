@@ -42,6 +42,10 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+if "rerun_flag" in st.session_state:
+    del st.session_state["rerun_flag"]
+    st.experimental_rerun()
+
 DATA_LOG_PATH = "Visit_Log.xlsx"
 MASTER_DATA_PATH = "Master Data New.xlsx"
 PHOTO_FOLDER = "Photos"
@@ -170,6 +174,7 @@ else:
                 st.success(f"✅ Visit logged successfully! Time spent: {datetime.strptime(logout_time, '%Y-%m-%d %H:%M:%S') - datetime.strptime(st.session_state['login_time'], '%Y-%m-%d %H:%M:%S')}")
 
                 st.session_state.clear()
-                st.experimental_rerun()
+                st.session_state["rerun_flag"] = True
+                st.stop()
     else:
         st.info("Enter Site ID above to begin visit process.")
