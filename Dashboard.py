@@ -151,9 +151,8 @@ else:
                     photo_filename = f"{site_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
                     image.save(os.path.join(PHOTO_FOLDER, photo_filename))
 
-                df = load_log()
-
                 if site_id and name and phone:
+                    df = load_log()
                     new_entry = pd.DataFrame([{ 
                         "Timestamp": logout_time,
                         "FE/Contractor Name": name,
