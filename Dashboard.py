@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 from streamlit_javascript import st_javascript
 from PIL import Image
+import pytz
 
 # === Config ===
 st.set_page_config(page_title="DigicelPNG Field Visit Login Portal", layout="wide")
@@ -97,7 +98,7 @@ def get_master_details(site_id):
             rto = region = ""
     else:
         rto = region = ""
-    now = datetime.now().strftime("%Y%m%d_%H%M%S")
+    now = datetime.now(pytz.timezone("Pacific/Port_Moresby")).strftime("%Y%m%d_%H%M%S")
     tt_number = f"TT_{site_id}_{now}"
     return rto, region, tt_number
 
@@ -127,7 +128,7 @@ else:
         st.markdown(f"**TT Number:** {tt_number}")
 
         if st.button("🔓 Site Login"):
-            login_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            login_time = datetime.now(pytz.timezone("Pacific/Port_Moresby")).strftime("%Y-%m-%d %H:%M:%S")
             st.session_state.clear()
             st.session_state["logged_in"] = True
             st.session_state["login_time"] = login_time
@@ -148,7 +149,7 @@ else:
             lat, lon = get_location()
 
             if st.button("🚪 Site Logout & Submit"):
-                logout_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                logout_time = datetime.now(pytz.timezone("Pacific/Port_Moresby")).strftime("%Y-%m-%d %H:%M:%S")
                 photo_filename = "N/A"
 
                 if uploaded_photo is not None:
@@ -178,7 +179,8 @@ else:
                     try:
                         df = pd.concat([df, new_entry], ignore_index=True)
                         save_log(df)
-                        st.success(f"✅ Visit logged successfully! Time spent: {datetime.strptime(logout_time, '%Y-%m-%d %H:%M:%S') - datetime.strptime(st.session_state['login_time'], '%Y-%m-%d %H:%M:%S')}")
+                        time_spent = datetime.strptime(logout_time, '%Y-%m-%d %H:%M:%S') - datetime.strptime(st.session_state['login_time'], '%Y-%m-%d %H:%M:%S')
+                        st.success(f"✅ Visit logged successfully! Time spent: {time_spent}")
                     except Exception as e:
                         st.error(f"❌ Error during log saving: {e}")
 
