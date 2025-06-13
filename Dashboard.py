@@ -118,12 +118,10 @@ if admin_mode:
 
         st.dataframe(df.drop(columns=["Photo"]), use_container_width=True)
 
-        st.markdown("### 🖼️ Uploaded Photos")
-        for _, row in df.iterrows():
-            if row['Photo'] != "N/A":
-                photo_path = os.path.join(PHOTO_FOLDER, row['Photo'])
-                if os.path.exists(photo_path):
-                    st.image(photo_path, caption=f"{row['Site ID']} - {row['FE/Contractor Name']}", use_column_width=True)
+        st.markdown("### 🖼️ Uploaded Photos (Session Only)")
+        if "uploaded_photos" in st.session_state:
+            for photo_data in st.session_state["uploaded_photos"]:
+                st.image(photo_data["image"], caption=photo_data["caption"], use_column_width=True)
 
         st.download_button("🗕 Download Log", data=df.to_csv(index=False).encode(), file_name="Visit_Log.csv")
 else:
@@ -162,9 +160,10 @@ else:
                 photo_filename = "N/A"
 
                 if uploaded_photo is not None:
-                    image = Image.open(uploaded_photo)
                     photo_filename = f"{site_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
-                    image.save(os.path.join(PHOTO_FOLDER, photo_filename))
+                    if "uploaded_photos" not in st.session_state:
+                        st.session_state["uploaded_photos"] = []
+                    st.session_state["uploaded_photos"].append({"image": uploaded_photo, "caption": f"{site_id} - {name}"})
 
                 if site_id and name and phone:
                     df = load_log()
