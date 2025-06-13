@@ -115,7 +115,16 @@ if admin_mode:
     if password == ADMIN_PASSWORD:
         st.success("Access granted.")
         df = load_log()
-        st.dataframe(df, use_container_width=True)
+
+        def show_photos(row):
+            photo_path = os.path.join(PHOTO_FOLDER, row['Photo'])
+            if os.path.exists(photo_path) and row['Photo'] != "N/A":
+                return f"[View]({photo_path})"
+            return ""
+
+        df_display = df.copy()
+        df_display["Photo Preview"] = df_display.apply(show_photos, axis=1)
+        st.dataframe(df_display.drop(columns=["Photo"]), use_container_width=True)
         st.download_button("🗕 Download Log", data=df.to_csv(index=False).encode(), file_name="Visit_Log.csv")
 else:
     st.subheader("📌 Enter Visit Details")
