@@ -116,15 +116,15 @@ if admin_mode:
         st.success("Access granted.")
         df = load_log()
 
-        def show_photos(row):
-            photo_path = os.path.join(PHOTO_FOLDER, row['Photo'])
-            if os.path.exists(photo_path) and row['Photo'] != "N/A":
-                return f"[View]({photo_path})"
-            return ""
+        st.dataframe(df.drop(columns=["Photo"]), use_container_width=True)
 
-        df_display = df.copy()
-        df_display["Photo Preview"] = df_display.apply(show_photos, axis=1)
-        st.dataframe(df_display.drop(columns=["Photo"]), use_container_width=True)
+        st.markdown("### 🖼️ Uploaded Photos")
+        for _, row in df.iterrows():
+            if row['Photo'] != "N/A":
+                photo_path = os.path.join(PHOTO_FOLDER, row['Photo'])
+                if os.path.exists(photo_path):
+                    st.image(photo_path, caption=f"{row['Site ID']} - {row['FE/Contractor Name']}", use_column_width=True)
+
         st.download_button("🗕 Download Log", data=df.to_csv(index=False).encode(), file_name="Visit_Log.csv")
 else:
     st.subheader("📌 Enter Visit Details")
